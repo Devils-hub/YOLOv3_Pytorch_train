@@ -1,13 +1,10 @@
 import time
 import torch
-import torch.nn as nn
 import numpy as np
-import random
-from torch.autograd import Variable
 from torch.utils.data import DataLoader
 from Pytorch.photo_detection.photo_detection_YOLOv3.yolo3_pytorch.nets.yolo3 import YoloBody
-from Pytorch.photo_detection.photo_detection_YOLOv3.yolo3_pytorch.utils.dataloader import yolo_dataset_collate, YoloDataset
-from Pytorch.photo_detection.photo_detection_YOLOv3.yolo3_pytorch.nets.yolo_training import YOLOLoss, Generator
+from Pytorch.photo_detection.photo_detection_YOLOv3.yolo3_pytorch.dataloader import yolo_dataset_collate, YoloDataset
+from Pytorch.photo_detection.photo_detection_YOLOv3.yolo3_pytorch.nets.yolo_training import YOLOLoss
 from Pytorch.photo_detection.photo_detection_YOLOv3.yolo3_pytorch.utils.config import Config
 import argparse
 from tqdm import tqdm
@@ -97,10 +94,6 @@ def train():
     val_num = int(len(lines) * val_slits)
     train_num = len(lines) - val_num
 
-    # witer = SummaryWriter(log_dir="./log", flush_secs=60)  # 进行训练可视化
-    # graph_inputs = torch.from_numpy(np.random.rand(1, 3, input_shape[1], input_shape[0])).type(torch.FloatTensor).cuda()
-    # witer.add_graph(model, graph_inputs)
-
     batch_size = args.batch_size
     optimizer = torch.optim.Adam(model.parameters(), args.lr)  # 优化器
     # lr_scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=5, eta_min=1e-5)  # 学习率余弦退火衰减
@@ -113,7 +106,6 @@ def train():
     val = DataLoader(val_dataset, batch_size=batch_size, num_workers=4, pin_memory=True,
                          drop_last=True, collate_fn=yolo_dataset_collate)
 
-    # train_epoch_size = max(1, train_num//batch_size)
     train_epoch_size = train_num // batch_size
     val_epoch_size = val_num // batch_size
 
