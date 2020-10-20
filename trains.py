@@ -57,11 +57,11 @@ def train():
     # num_classes = len(get_classes(args.classes))  # get classes
     # 绘制模型
     # model = YoloBody(len(anchors[0]), num_classes)
-    model = YoloBody(Config)
+    models = YoloBody(Config)
 
     # 使用预训练模型，如果显卡不够大的话可以使用预训练模型来微调
     print("Load pretrained model into state dict...")
-    model_list = model.state_dict()
+    model_list = models.state_dict()
     pretrained_dict = torch.load(args.model, map_location="cuda:0")  # Load pretrained model
 
     pretrained_dicts = {}
@@ -71,16 +71,17 @@ def train():
             pretrained_dicts[k] = v
 
     model_list.update(pretrained_dicts)
-    model.load_state_dict(model_list)
+    models.load_state_dict(model_list)
     print("Finished!")
 
-    model.train()
-    model.to(device)
+    models.train()
+    model = models.to(device)
 
+    # yolo_losses = []  # creat loss function
     # input_shape = args.input_size
     # for i in range(3):
     #     yolo_losses.append(YOLOLoss(np.reshape(anchors, [-1, 2]), num_classes,
-    #                                 (input_shape[1], input_shape[0]), label_smooth=False))
+    #                                 (input_shape[1], input_shape[0]), label_smooth=0.1, cuda=True))
     yolo_losses = []  # creat loss function
     for i in range(3):
         yolo_losses.append(YOLOLoss(np.reshape(Config["yolo"]["anchors"], [-1, 2]),
@@ -109,7 +110,7 @@ def train():
     train_epoch_size = train_num // batch_size
     val_epoch_size = val_num // batch_size
 
-    for param in model.backbone.parameters():  # 冻结部分网络
+    for param in models.backbone.parameters():  # 冻结部分网络
         param.requires_grad = False
 
     epochs = args.epochs
@@ -179,7 +180,7 @@ def train():
             total_loss / (train_epoch_size + 1), val_loss / (val_epoch_size + 1)))
 
         print('Saving state, iter:', str(epoch + 1))
-        torch.save(model.state_dict(), 'log/Epoch%d-Total_Loss%.4f-Val_Loss%.4f.pth' % ((epoch + 1), total_loss / (train_epoch_size + 1), val_loss / (val_epoch_size + 1)))
+        torch.save(models.state_dict(), 'log/Epoch%d-Total_Loss%.4f-Val_Loss%.4f.pth' % ((epoch + 1), total_loss / (train_epoch_size + 1), val_loss / (val_epoch_size + 1)))
         lr_scheduler.step()
 
 
